@@ -1,86 +1,63 @@
-// Banco de dados simplificado de microalgas
-const microalgasDB = {
-    "Chlorella": {
-        caracteristicas: "Forma esférica, verde intenso",
-        tamanho: "5-10 μm"
-    },
-    "Spirulina": {
-        caracteristicas: "Forma espiralada, azul-esverdeada",
-        tamanho: "3-5 μm de largura"
-    },
-    "Microcystis": {
-        caracteristicas: "Colônias arredondadas, verde-azuladas",
-        tamanho: "3-7 μm"
-    }
-};
+// Lista EXATA das suas 11 classes na ORDEM do Teachable Machine
+const CLASSES = [
+    "Chlorophyceae-Hydrodictyaceae",
+    "Chlorophyceae-Radiococcaceae",
+    "Chlorophyceae-Scenedesmaceae",
+    "Chlorophyceae-Sphaeropleales",
+    "Chlorophyceae-Treubariaceae",
+    "Cyanobacteria",
+    "Klebsormidiophy-Elakatotrichaceae",
+    "Trebouxiophyceae-Botryococcaceae",
+    "Trebouxiophyceae-Chlorellaceae",
+    "Trebouxiophyceae-Oocystaceae",
+    "Tribophyceae-Centritractaceae"
+];
 
-// Elementos da página
-const dropZone = document.getElementById('dropZone');
-const imageUpload = document.getElementById('imageUpload');
-const imagePreview = document.getElementById('imagePreview');
-const resultsDiv = document.getElementById('results');
-
-// Configuração da zona de arrastar e soltar
-dropZone.addEventListener('click', () => imageUpload.click());
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.style.backgroundColor = '#e6f7ed';
-});
-dropZone.addEventListener('dragleave', () => {
-    dropZone.style.backgroundColor = '';
-});
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.style.backgroundColor = '';
-    if (e.dataTransfer.files.length) {
-        imageUpload.files = e.dataTransfer.files;
-        processImage(e.dataTransfer.files[0]);
-    }
-});
-
-// Quando uma imagem é selecionada
-imageUpload.addEventListener('change', (e) => {
-    if (e.target.files.length) {
-        processImage(e.target.files[0]);
-    }
-});
-
-// Processa a imagem e faz a "identificação"
-function processImage(file) {
-    // Limpa resultados anteriores
-    imagePreview.innerHTML = '';
-    resultsDiv.innerHTML = 'Analisando...';
-    
-    // Mostra a imagem carregada
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        imagePreview.appendChild(img);
-        
-        // Simulação de análise (substitua por sua lógica real)
-        setTimeout(() => {
-            identifyMicroalgae(img);
-        }, 1500);
-    };
-    reader.readAsDataURL(file);
+// Função para formatar os nomes para exibição
+function formatClassName(fullName) {
+    const [classe, familia] = fullName.split('-');
+    return familia 
+        ? `<span class="class">${classe}</span>-<span class="family">${familia}</span>`
+        : fullName;
 }
 
-// Função que "identifica" as microalgas (simulação)
-function identifyMicroalgae(imgElement) {
-    // Esta é uma simulação - na prática você usaria TensorFlow.js ou uma API
-    const randomMicroalga = Object.keys(microalgasDB)[Math.floor(Math.random() * Object.keys(microalgasDB).length)];
-    const contagem = Math.floor(Math.random() * 50) + 10;
+async function analyzeImage(img) {
+    const tensor = tf.browser.fromPixels(img)
+        .resizeNearestNeighbor([224, 224])
+        .toFloat()
+        .expandDims();
     
-    resultsDiv.innerHTML = `
-        <h3>Resultado da Análise:</h3>
-        <p><strong>Microalga identificada:</strong> ${randomMicroalga}</p>
-        <p><strong>Contagem estimada:</strong> ${contagem} células</p>
-        <p><strong>Características:</strong> ${microalgasDB[randomMicroalga].caracteristicas}</p>
-        <p><strong>Tamanho médio:</strong> ${microalgasDB[randomMicroalga].tamanho}</p>
-    `;
-    
-    // Na prática, aqui você integraria com:
-    // 1. TensorFlow.js para análise no navegador
-    // 2. Ou uma API backend que processa a imagem
+    const predictions = await model.predict(tensor).data();
+    showResults(predictions);
 }
+
+function showResults(predictions) {
+    const results = CLASSES.map((className, index) => ({
+        className,
+        probability: predictions[index]
+    })).sort((a, b) => b.probability - a.probability);
+
+    let html = `<h3>Identificação de Microalgas</h3>
+               <div class="confidence-meter">
+                   <div class="confidence-bar" style="width:${results[0].probability * 100}%"></div>
+               </div>`;
+    
+    // Top 3 resultados
+    results.slice(0, 3).forEach((res, i) => {
+        html += `
+        <div class="result-item ${i === 0 ? 'top-result' : ''}">
+            <div class="rank">${i + 1}º</div>
+            <div class="name">${formatClassName(res.className)}</div>
+            <div class="percentage">${(res.probability * 100).toFixed(1)}%</div>
+        </div>`;
+    });
+
+    document.getElementById('results').innerHTML = html;
+}
+
+// Inicialização
+let model;
+(async function() {
+    model = await tf.loadLayersModel('model/model.json');
+    console.log("Modelo carregado para 11 classes!");
+})();
