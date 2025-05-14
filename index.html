@@ -3,22 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Identificador de Microalgas</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Identificador Científico de Microalgas</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Identificador de Microalgas</h1>
+        <header>
+            <h1>🔬 Identificador Taxonômico de Microalgas</h1>
+            <p class="subtitle">Classificação automática para 11 grupos científicos</p>
+        </header>
+
         <div class="upload-area" id="dropZone">
-            <p>Arraste e solte uma imagem aqui ou clique para selecionar</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4a7a9a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Arraste uma imagem de microscopia ou clique para selecionar</p>
             <input type="file" id="imageUpload" accept="image/*">
         </div>
+
+        <div id="loader"></div>
+
+        <div id="imagePreview" class="image-preview"></div>
+
         <div class="result-area">
-            <h2>Resultado:</h2>
-            <div id="imagePreview"></div>
-            <div id="results"></div>
+            <h2>Análise Taxonômica</h2>
+            <div id="results">
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p>Nenhuma imagem analisada ainda</p>
+                    <p class="hint">Envie uma imagem de microscopia para identificação</p>
+                </div>
+            </div>
         </div>
+
+        <footer class="footer">
+            <p>Sistema de classificação automática - <span class="scientific-name">v1.2.0</span></p>
+            <p class="credits">Desenvolvido para pesquisa em ficologia</p>
+        </footer>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
